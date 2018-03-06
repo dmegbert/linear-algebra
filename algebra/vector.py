@@ -1,3 +1,6 @@
+from math import sqrt, acos, degrees
+from functools import reduce
+
 class Vector(object):
     def __init__(self, coordinates):
         try:
@@ -36,3 +39,29 @@ class Vector(object):
 
     def scalar_multiply(self, scalar):
         return Vector([scalar * x for x in self.coordinates])
+
+    def magnitude(self):
+        """Returns a float of the magnitude (distance) of the vector"""
+        return sqrt(sum([x ** 2 for x in self.coordinates]))
+
+    def normalized(self):
+        """Returns a normal vector (magnitude of 1) in the direction of the given vector"""
+        try:
+            return self.scalar_multiply(1.0/ self.magnitude())
+
+        except ZeroDivisionError:
+            raise Exception('Cannot normalize the zero vector')
+
+    def dot_product(self, vector):
+        if self.dimension != vector.dimension:
+            raise ValueError('The vectors must have the same dimension')
+
+        return sum(self.coordinates[i] * vector.coordinates[i] for i in range(vector.dimension))
+
+    def angle(self, vector):
+        """
+        Compute the measure of an angle between two vectors
+        :param vector
+        :returns Float of angle measure in radians
+        """
+        return acos(self.dot_product(vector) / (self.magnitude() * vector.magnitude()))
