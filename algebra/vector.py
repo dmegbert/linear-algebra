@@ -1,12 +1,18 @@
 from math import sqrt, acos, degrees
-from functools import reduce
+from decimal import Decimal, getcontext
+
+getcontext().prec = 30
+
 
 class Vector(object):
+
+    CANNOT_NORMALIZE_ZERO_VECTOR_MSG = 'Cannot normalize the zero vector'
+
     def __init__(self, coordinates):
         try:
             if not coordinates:
                 raise ValueError
-            self.coordinates = tuple(coordinates)
+            self.coordinates = tuple([Decimal(x) for x in coordinates])
             self.dimension = len(coordinates)
 
         except ValueError:
@@ -38,19 +44,19 @@ class Vector(object):
         return Vector([self.coordinates[i] - vector.coordinates[i] for i in range(vector.dimension)])
 
     def scalar_multiply(self, scalar):
-        return Vector([scalar * x for x in self.coordinates])
+        return Vector([Decimal(scalar) * x for x in self.coordinates])
 
     def magnitude(self):
         """Returns a float of the magnitude (distance) of the vector"""
-        return sqrt(sum([x ** 2 for x in self.coordinates]))
+        return Decimal(sqrt(sum([x ** Decimal(2) for x in self.coordinates])))
 
     def normalized(self):
         """Returns a normal vector (magnitude of 1) in the direction of the given vector"""
         try:
-            return self.scalar_multiply(1.0/ self.magnitude())
+            return self.scalar_multiply(Decimal('1.0') / self.magnitude())
 
         except ZeroDivisionError:
-            raise Exception('Cannot normalize the zero vector')
+            raise Exception(self.CANNOT_NORMALIZE_ZERO_VECTOR_MSG)
 
     def dot_product(self, vector):
         if self.dimension != vector.dimension:
@@ -58,10 +64,23 @@ class Vector(object):
 
         return sum(self.coordinates[i] * vector.coordinates[i] for i in range(vector.dimension))
 
-    def angle(self, vector):
+    def angle(self, vector, in_degrees=False):
         """
         Compute the measure of an angle between two vectors
         :param vector
         :returns Float of angle measure in radians
         """
-        return acos(self.dot_product(vector) / (self.magnitude() * vector.magnitude()))
+        try:
+            u1 = self.normalized()
+            u2 = vector.normalized()
+            if in_degrees:
+                return degrees(acos(u1.dot_product(u2)))
+            return acos(u1.dot_product(u2))
+        except Exception as exp:
+            if str(exp) == self.CANNOT_NORMALIZE_ZERO_VECTOR_MSG:
+                raise Exception('Cannot compute an angle with zero vector')
+            else:
+                raise exp
+
+# a = Vector([1,1])
+# b = Vector([1, 0])
